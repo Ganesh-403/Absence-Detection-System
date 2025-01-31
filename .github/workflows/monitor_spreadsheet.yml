@@ -25,6 +25,6 @@ jobs:
     
     - name: Run the script
       run: |
-        python script_name.py  # Replace with the name of your script
+        python Trigger.py  # Replace with the name of your script
       env:
         GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
