@@ -26,8 +26,8 @@ jobs:
       - name: Run script
         env:
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
-          SHEET1_NAME: 'Copy 2 of Attendance Form'
-          SHEET2_NAME: 'Whatsapp Trial'
-          NO_OF_DAYS: '7'
+          SHEET1_NAME: ${{ secrets.SHEET1_NAME }}
+          SHEET2_NAME: ${{ secrets.SHEET2_NAME }}
+          NO_OF_DAYS: ${{ secrets.NO_OF_DAYS }}
         run: |
-          python script_name.py  # Replace with the name of your script
+          python script_name.py  # Replace with your actual script file name
