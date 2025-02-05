@@ -1,54 +1,49 @@
 import os
-import json
 import gspread
 import pandas as pd
 from google.auth.transport.requests import Request
 from google.oauth2.service_account import Credentials
 
-def trigger(sheet1_name, sheet2_name, no_of_days):
+def trigger(sheet1_name, sheet1_worksheet, sheet2_name, sheet2_worksheet, no_of_days):
     SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
-    # Parse JSON credentials from GitHub Secrets
+    # Get credentials from GitHub Secret
     service_account_info = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
 
-    if service_account_info:
-        service_account_info = json.loads(service_account_info)  # Convert string to dictionary
-
-    credentials = Credentials.from_service_account_info(
-        service_account_info, scopes=SCOPES)
+    # Convert credentials JSON from string to dictionary
+    credentials = Credentials.from_service_account_info(eval(service_account_info), scopes=SCOPES)
     client = gspread.authorize(credentials)
 
-    attendance_sheet = client.open(sheet1_name).worksheet(sheet1_name)
-    phone_sheet = client.open(sheet2_name).worksheet(sheet2_name)
+    # Debugging: Print the loaded secret values
+    print(f"Spreadsheet 1: {sheet1_name} | Worksheet 1: {sheet1_worksheet}")
+    print(f"Spreadsheet 2: {sheet2_name} | Worksheet 2: {sheet2_worksheet}")
 
+    # Open the spreadsheets and correct worksheets
+    attendance_sheet = client.open(sheet1_name).worksheet(sheet1_worksheet)
+    phone_sheet = client.open(sheet2_name).worksheet(sheet2_worksheet)
+
+    # Convert data into pandas DataFrame
     attendance_data = pd.DataFrame(attendance_sheet.get_all_records())
     phone_data = pd.DataFrame(phone_sheet.get_all_records())
 
-    # Strip spaces from column names to avoid KeyError
-    attendance_data.columns = attendance_data.columns.str.strip()
-    phone_data.columns = phone_data.columns.str.strip()
-
     attendance_data['Date'] = pd.to_datetime(attendance_data['Date'])
-    attendance_data = attendance_data.sort_values(by=['Enter Last Name', 'Date'])
+    attendance_data = attendance_data.sort_values(by=['Enter Last Name ', 'Date'])
 
     students_with_long_absences = []
 
-    for _, group in attendance_data.groupby(['Enter First Name', 'Enter Last Name']):
+    for _, group in attendance_data.groupby(['Enter First Name ', 'Enter Last Name ']):
         submission_dates = group['Date'].tolist()
-        first_name = group['Enter First Name'].iloc[0]
-        last_name = group['Enter Last Name'].iloc[0]
+        first_name = group['Enter First Name '].iloc[0]
+        last_name = group['Enter Last Name '].iloc[0]
 
-        if len(submission_dates) > 1:
-            i = len(submission_dates) - 1
-            day_difference = (submission_dates[i] - submission_dates[i - 1]).days
-        else:
-            day_difference = 0  # Avoid error if only one entry
+        i = len(submission_dates) - 1
+        day_difference = (submission_dates[i] - submission_dates[i - 1]).days
 
         if day_difference >= no_of_days:
             phone_number = phone_data[
-                (phone_data['First Name'] == first_name) & 
-                (phone_data['Last Name'] == last_name)
+                (phone_data['First Name'] == first_name) & (phone_data['Last Name'] == last_name)
             ]['Phone'].values
+
             if phone_number.size > 0:
                 students_with_long_absences.append({
                     "Name": f"{first_name} {last_name}",
@@ -64,8 +59,13 @@ def trigger(sheet1_name, sheet2_name, no_of_days):
     else:
         print(f"No students were absent for more than {no_of_days} days.")
 
-sheet1_name = os.getenv('SHEET1_NAME', 'Copy 2 of Attendance Form')
-sheet2_name = os.getenv('SHEET2_NAME', 'Whatsapp Trial')
-no_of_days = int(os.getenv('NO_OF_DAYS', '7'))
+# Load secrets from GitHub environment variables
+sheet1_name = os.getenv('SHEET1_NAME')
+sheet1_worksheet = os.getenv('SHEET1_WORKSHEET')
 
-trigger(sheet1_name, sheet2_name, no_of_days)
+sheet2_name = os.getenv('SHEET2_NAME')
+sheet2_worksheet = os.getenv('SHEET2_WORKSHEET')
+
+no_of_days = int(os.getenv('NO_OF_DAYS', '7'))  # Default is 7
+
+trigger(sheet1_name, sheet1_worksheet, sheet2_name, sheet2_worksheet, no_of_days)
