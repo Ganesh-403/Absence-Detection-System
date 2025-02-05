@@ -9,7 +9,7 @@ httplib2==0.22.0
 idna==3.10
 numpy==1.24.4
 oauthlib==3.2.2
-pandas==2.2.3
+pandas==2.0.3
 pyasn1==0.6.1
 pyasn1_modules==0.4.1
 pyparsing==3.2.1
