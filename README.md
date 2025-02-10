@@ -83,5 +83,5 @@ pip install -r requirements.txt
 This project is licensed under the MIT License.
 
 ## Author
-Ganesh Kambli
+[Ganesh Kambli](https://github.com/Ganesh-403)
 
